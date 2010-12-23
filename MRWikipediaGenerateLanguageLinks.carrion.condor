@@ -1,0 +1,17 @@
+universe = vanilla
+requirements = InMastodon
+
+Initialdir = /projects/nn/joeraii/parallelized-extraction
+Executable = /lusr/bin/python
+
+environment = "PYTHONPATH=${PYTHONPATH}:utils/"
+
+Error = /tmp/wiki.err.$(Process)  
+Output = /tmp/wiki.out.$(Process) 
+
++Group   = "GRAD"
++Project = "AI_ROBOTICS"
++ProjectDescription = "Collecting word frequency stats on Wikipedia data."
+
+Arguments = /projects/nn/joeraii/parallelized-extraction/MRWikipediaGenerateLanguageLinks.py --client carrion 
+Queue 50

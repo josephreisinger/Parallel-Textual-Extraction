@@ -157,8 +157,7 @@ def extract_categories(f, BannedArticleTypes):
 
 re_redirect = re.compile('\#redirect|\#REDIRECT')
 
-def map_over_wikipedia_documents(function, f, BannedArticleTypes,
-        filter_extraneous=False, parse_mediawiki=True, space_punctuation=False): 
+def map_over_wikipedia_documents(function, f, BannedArticleTypes, filter_extraneous=False, parse_mediawiki=True, space_punctuation=False): 
     """
     This generator returns cleaned documents read from the input stream 
     one at a time.
@@ -192,6 +191,7 @@ def map_over_wikipedia_documents(function, f, BannedArticleTypes,
                     if re.findall(re_redirect, temp[:20]):
                         flags.add('REDIRECT')
 
+                    links = re_extract_links(temp, current_title)
                     try:
                         if parse_mediawiki:
                             temp = parse_raw_mediawiki(current_title, temp)
@@ -205,7 +205,7 @@ def map_over_wikipedia_documents(function, f, BannedArticleTypes,
 
                     if filter_extraneous:
                         clean = ' '.join(filter_non_content(clean.split(' ')))
-                    yield (current_title, clean, flags)
+                    yield (current_title, clean, links, flags)
 
                 # Reset for the next document
                 buffer = []

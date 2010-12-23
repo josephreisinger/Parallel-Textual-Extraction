@@ -71,7 +71,7 @@ class MyMapper(Mapper):
 
         reader = codecs.getreader('utf8')(BZ2File(token))
 
-        for (doc_count, (current_title, document, _)) in get_document_iterator(SourceDataType, token):
+        for (doc_count, (current_title, document, links, _)) in get_document_iterator(SourceDataType, token):
             document = document.replace('<CR>', ' ')
 
             split_doc = document.split()

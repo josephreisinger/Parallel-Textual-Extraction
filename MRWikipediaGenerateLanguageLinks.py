@@ -15,14 +15,33 @@ BadRedirectLinkCountThreshold = 4
 # Output level
 logger.setLevel( logging.INFO )
 
-BannedArticleTypes = ['Image:', 'Wikipedia:']
-
-BZ2ShardedMothership.OutputFile = 'wikipedia-link-graph.txt.bz2'
+BannedArticleTypes = ['Image:', 'Wikipedia:', 'Template:']
 
 SourceDataType = 'wikipedia-nospace'
+MinDocumentLength = 1000
+
+SkipLanguages = ['fr']
+
+BZ2ShardedMothership.OutputFile = '%s-language-links-%dmin-skip-%s.txt.bz2' % (SourceDataType, MinDocumentLength, '-'.join(SkipLanguages))
+
+
 
 class MyMapper(Mapper):
+
+    def process(self, current_title, split_doc, links):
+        if len(split_doc) > MinDocumentLength:
+            output_set = set()
+            for link in links:
+                # self.output('%s\t%s' % (current_title, link))
+                # print current_title, link.encode('ascii', 'replace')
+                for lang in SkipLanguages:
+                    if link.startswith('[['+lang+':'):
+                        return
+            
+            self.output(current_title)
+
     def map(self, token):
+        from utils import get_document_iterator
         logger.info('Mapping token [%r]' % token)
 
         inside_body = False  # are we inside the body text or not
@@ -33,23 +52,10 @@ class MyMapper(Mapper):
 
         reader = codecs.getreader('utf8')(BZ2File(token))
 
-        for (doc_count, (current_title, document, links, flags)) in get_document_iterator(SourceDataType, token):
+        for (doc_count, (current_title, document, links, flags)) in get_document_iterator(SourceDataType, token, BannedArticleTypes):
             document = document.replace('<CR>', ' ')
             split_doc = document.split()
-
-            output_set = set()
-            for link in links:
-                link = link.replace('[[','').replace(']]','')
-                if link:
-                    #print ('%s\t%s' % (current_title,
-                    #    link)).encode('utf8','replace')
-                    if 'REDIRECT' in flags and len(links) <= BadRedirectLinkCountThreshold:
-                        output_set.add('REDIRECT\t%s\t%s' % (current_title, link))
-                    else:
-                        output_set.add('NORMAL\t%s\t%s' % (current_title, link))
-
-            for x in output_set:
-                self.output(x)
+            self.process(current_title, split_doc, links)
 
             if doc_count % 100 == 0:
                 logger.info('Processed %d documents' % doc_count)
