@@ -20,7 +20,7 @@ BannedArticleTypes = ['Image:', 'Wikipedia:', 'Template:']
 SourceDataType = 'wikipedia-nospace'
 MinDocumentLength = 1000
 
-SkipLanguages = ['fr']
+SkipLanguages = set(['fr','de','ja','zh','it','pl','es','ru','pt','nl'])
 
 BZ2ShardedMothership.OutputFile = '%s-language-links-%dmin-skip-%s.txt.bz2' % (SourceDataType, MinDocumentLength, '-'.join(SkipLanguages))
 
@@ -31,14 +31,18 @@ class MyMapper(Mapper):
     def process(self, current_title, split_doc, links):
         if len(split_doc) > MinDocumentLength:
             output_set = set()
+            found = set()
             for link in links:
                 # self.output('%s\t%s' % (current_title, link))
                 # print current_title, link.encode('ascii', 'replace')
                 for lang in SkipLanguages:
                     if link.startswith('[['+lang+':'):
-                        return
+                        found.add(lang)
             
-            self.output(current_title)
+            missing = SkipLanguages - found
+            if missing:
+                self.output('%s\t%d\t%d\t%s' % (current_title, len(split_doc),
+                    len(missing), ','.join(missing)))
 
     def map(self, token):
         from utils import get_document_iterator
